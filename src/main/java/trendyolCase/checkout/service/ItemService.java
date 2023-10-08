@@ -10,12 +10,10 @@ import trendyolCase.checkout.model.entity.item.DigitalItem;
 import trendyolCase.checkout.model.entity.item.Item;
 import trendyolCase.checkout.model.entity.item.VasItem;
 
-
 @Service
 public class ItemService {
     public Item createItemFromRequest(AddItemRequestDTO addItemRequest) {
         Item item;
-        // Digital Item
         //TODO: no hardcoded values
         if (addItemRequest.getCategoryId() == 7889) {
             item = new DigitalItem();
@@ -30,9 +28,10 @@ public class ItemService {
         item.setQuantity(addItemRequest.getQuantity());
         return item;
     }
+
     public VasItem createVasItemFromRequest(DefaultItemCart defaultItemCart, AddVasItemRequestDTO addVasItemRequest) {
         VasItem vasItem = new VasItem();
-        DefaultItem defaultItem = (DefaultItem) defaultItemCart.getItemById(addVasItemRequest.getItemId());
+        DefaultItem defaultItem = (DefaultItem) defaultItemCart.getItemByIdFromCart(addVasItemRequest.getItemId());
         if(defaultItem == null){
             System.out.println("Item not found in cart");
             return null;

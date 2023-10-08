@@ -23,4 +23,13 @@ public class Item {
     public boolean isItemQuantityExceedingLimits() {
         return quantity > maxQuantity;
     }
+    public double getItemTotalAmount(){
+        return this.getPrice() * this.getQuantity();
+    }
+    public void updateQuantity(int itemQuantity) {
+        if(this.getQuantity() + itemQuantity > maxQuantity) throw
+            new IllegalArgumentException("Item quantity is exceeding limits");
+        else
+            this.setQuantity(this.getQuantity() + itemQuantity);
+    }
 }

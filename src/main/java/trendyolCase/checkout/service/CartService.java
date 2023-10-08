@@ -1,8 +1,8 @@
 package trendyolCase.checkout.service;
 
-import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import trendyolCase.checkout.exceptions.CartTotalExceededException;
 import trendyolCase.checkout.factory.CartFactory;
 import trendyolCase.checkout.model.dto.item.AddItemRequestDTO;
 import trendyolCase.checkout.model.dto.item.AddVasItemRequestDTO;
@@ -14,12 +14,14 @@ import trendyolCase.checkout.model.entity.cart.DigitalItemCart;
 import trendyolCase.checkout.model.entity.item.DefaultItem;
 import trendyolCase.checkout.model.entity.item.DigitalItem;
 import trendyolCase.checkout.model.entity.item.Item;
-import trendyolCase.checkout.service.ItemService;
 
 @Service
 public class CartService {
     public ItemService itemService;
     private final CartFactory cartFactory;
+    private static final int MAX_ITEM_NUMBER = 30;
+    private static final int MAX_UNIQUE_ITEM_NUMBER = 10;
+    private static final int MAX_AMOUNT = 500000;
 
     @Autowired
     public CartService(CartFactory cartFactory, ItemService itemService) {
@@ -27,25 +29,19 @@ public class CartService {
         this.itemService = itemService;
     }
 
-    public Cart addItemToCart(AddItemRequestDTO itemRequest) {
+    public Cart addItemToCart(AddItemRequestDTO itemRequest) throws CartTotalExceededException {
         Item item = itemService.createItemFromRequest(itemRequest);
-        if(item.isItemQuantityExceedingLimits()){
-            System.out.println("Item quantity is exceeding limits");
-            return null;
-        }
         Cart cart = cartFactory.getCart();
-
         if (cart == null) {
             cart = createCartForItem(item);
         }
-        // Check if cart type is same as item type, refuse to add if not
-        else if (!isCartCompatible(cart, item)) {
+        if (checkCartConditions(cart, item)) {
+            cart.addItem(item);
+            return cart;
+        } else {
             return null;
         }
-        cart.addItem(item);
-        return cart;
     }
-
 
     private boolean isCartCompatible(Cart cart, Item item) {
         if (cart instanceof DigitalItemCart && item instanceof DefaultItem) {
@@ -94,5 +90,37 @@ public class CartService {
         Cart cart = cartFactory.getCart();
         cart.removeItem(removeItemRequest.getItemId());
         return cart;
+    }
+
+    public boolean isCartAmountExtendingLimits(Cart cart, Item item) {
+        return cart.getTotalAmount() + item.getItemTotalAmount() > MAX_AMOUNT;
+    }
+    public boolean isCartItemNumberExtendingLimits(Cart cart, Item item) {
+        return cart.getItemCount() + item.getQuantity() > MAX_ITEM_NUMBER;
+    }
+    ////TODO
+    public boolean isItemQuantityExceedingLimits(Item item) {
+        return item.getQuantity() > item.getMaxQuantity();
+    }
+    public boolean isCartUniqueItemNumberExtendingLimits(Cart cart){
+        return cart.getItems().size() > MAX_UNIQUE_ITEM_NUMBER;
+    }
+    public boolean checkCartConditions(Cart cart, Item item) throws CartTotalExceededException {
+        if (isCartAmountExtendingLimits(cart, item)) {
+            throw new CartTotalExceededException("Adding this item would exceed the cart's total limit.");
+        }
+        if (isCartUniqueItemNumberExtendingLimits(cart)){
+            throw new CartTotalExceededException("Cart can only contain 10 unique items");
+        }
+        if (isCartItemNumberExtendingLimits(cart, item)) {
+            throw new CartTotalExceededException("Cart can only contain 30 items");
+        }
+        if (isItemQuantityExceedingLimits( item)) {
+            throw new CartTotalExceededException("Item quantity is exceeding limits");
+        }
+        if (!isCartCompatible(cart, item)) {
+            throw new CartTotalExceededException("Item type is not compatible with cart type");
+        }
+        return true;
     }
 }
