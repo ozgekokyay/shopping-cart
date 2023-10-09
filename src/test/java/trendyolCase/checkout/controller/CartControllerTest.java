@@ -6,7 +6,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import trendyolCase.checkout.model.request.AddItemRequest;
-import trendyolCase.checkout.model.request.AddItemRequestDTO;
 import trendyolCase.checkout.model.entity.cart.Cart;
 import trendyolCase.checkout.service.CartService;
 

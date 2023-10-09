@@ -1,5 +1,7 @@
 package trendyolCase.checkout.model.entity.cart;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import trendyolCase.checkout.model.entity.item.Item;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +15,13 @@ adedi 30'dan fazla olamaz. Cart'ın toplam tutarı 500.000 TL'den fazla olamaz.
 * */
 
 @Data
+@Component
 public class Cart {
-    // TODO config file
-    private static final int MAX_ITEM_NUMBER = 30;
-    private static final int MAX_UNIQUE_ITEM_NUMBER = 10;
+    @Value("${cart.max_item_number}")
+    private int MAX_ITEM_NUMBER = 30;
+    @Value("${cart.max_unique_item_number}")
+    private int MAX_UNIQUE_ITEM_NUMBER = 10;
+    @Value("${cart.max_amount}")
     private double MAX_AMOUNT;
 
     private UUID id;
@@ -71,9 +76,6 @@ public class Cart {
         totalAmount -= getItemByIdFromCart(itemId).getItemTotalAmount();
     }
 
-
-
-    // Reset cart to initial state and remove all items. Also, assign a new UUID to cart.
     public void resetCart() {
         this.id = UUID.randomUUID();
         this.totalAmount = 0;

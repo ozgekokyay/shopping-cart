@@ -1,28 +1,26 @@
 package trendyolCase.checkout.model.entity.item;
 
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import trendyolCase.checkout.exception.BusinessException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/*Item
-Cart üzerinde bulunan ürünlerdir. Cart'a item eklenip, çıkartılabilir. Cart item'ları sıfırlanabilir.
-Itemlar birden fazla türde olabilir VasItem, DefaultItem, DigitalItem gibi. Item birden fazla
-adette eklenebilir. Bir itemin maksimum eklenme adedi 10'dur. Her item'in fiyatı farklı şekilde
-belirlenir ve input olarak uygulamaya verilir. Sepetteki itemlarin satıcı ve kategori ID'leri
-vardır*/
 
-//TODO should it be abstract, defaulItem has vasItem methods
 @Data
+@Component
 public class Item {
-    private static final int MAX_ITEM_COUNT_VAS_ITEM = 3;
+    @Value("${item.max_item_count_vas_item}")
+    private int MAX_ITEM_COUNT_VAS_ITEM;
+    @Value("${item.max_quantity}")
+    private int maxQuantity;
     Integer id;
     private int quantity;
     private int categoryId;
     private int sellerId;
     private double price;
-    private int maxQuantity = 10;
     private String typeOfItem = getClass().toString();
     private List<VasItem> vasItems = new ArrayList<>();
     private int vasItemCount = 0;
