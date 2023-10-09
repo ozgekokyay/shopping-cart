@@ -1,9 +1,9 @@
-package trendyolCase.checkout.model.dto.item;
+package trendyolCase.checkout.model.request;
 
 import lombok.Data;
 
 @Data
-public class AddVasItemRequestDTO {
+public class AddVasItemRequest {
     Integer itemId;
     Integer vasItemId;
     Integer categoryId;

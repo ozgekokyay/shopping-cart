@@ -1,10 +1,10 @@
-package trendyolCase.checkout.model.dto.item;
+package trendyolCase.checkout.model.request;
 
 import lombok.Data;
 
 // "itemId":int, "categoryId":int, "sellerId":int, "price":double, "quantity":int, "itemType":string
 @Data
-public class AddItemRequestDTO {
+public class AddItemRequest {
     Integer itemId;
     Integer categoryId;
     Integer sellerId;

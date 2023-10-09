@@ -1,14 +1,16 @@
 package trendyolCase.checkout.service;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import trendyolCase.checkout.exception.BusinessException;
+import trendyolCase.checkout.model.dto.cart.CartDisplayDTO;
+import trendyolCase.checkout.model.mapper.CartMapper;
+import trendyolCase.checkout.service.promotion.PromotionService;
 import org.springframework.stereotype.Service;
-import trendyolCase.checkout.exceptions.CartTotalExceededException;
-import trendyolCase.checkout.factory.CartFactory;
-import trendyolCase.checkout.model.dto.item.AddItemRequestDTO;
-import trendyolCase.checkout.model.dto.item.AddVasItemRequestDTO;
-import trendyolCase.checkout.model.dto.item.RemoveItemRequest;
-import trendyolCase.checkout.model.entity.cart.Cart;
 
+import trendyolCase.checkout.factory.CartFactory;
+import trendyolCase.checkout.model.request.AddItemRequest;
+import trendyolCase.checkout.model.request.AddVasItemRequest;
+import trendyolCase.checkout.model.request.RemoveItemRequest;
+import trendyolCase.checkout.model.entity.cart.Cart;
 import trendyolCase.checkout.model.entity.cart.DefaultItemCart;
 import trendyolCase.checkout.model.entity.cart.DigitalItemCart;
 import trendyolCase.checkout.model.entity.item.DefaultItem;
@@ -16,25 +18,25 @@ import trendyolCase.checkout.model.entity.item.DigitalItem;
 import trendyolCase.checkout.model.entity.item.Item;
 
 @Service
+@RequiredArgsConstructor
 public class CartService {
-    public ItemService itemService;
+    private final ItemService itemService;
     private final CartFactory cartFactory;
+    private final PromotionService promotionService;
+
     private static final int MAX_ITEM_NUMBER = 30;
     private static final int MAX_UNIQUE_ITEM_NUMBER = 10;
     private static final int MAX_AMOUNT = 500000;
 
-    @Autowired
-    public CartService(CartFactory cartFactory, ItemService itemService) {
-        this.cartFactory = cartFactory;
-        this.itemService = itemService;
-    }
 
-    public Cart addItemToCart(AddItemRequestDTO itemRequest) throws CartTotalExceededException {
+    public Cart addItemToCart(AddItemRequest itemRequest) throws BusinessException {
         Item item = itemService.createItemFromRequest(itemRequest);
-        Cart cart = cartFactory.getCart();
-        if (cart == null) {
-            cart = createCartForItem(item);
+        if (!cartFactory.isCartCreated()) {
+            createCartForItem(item);
         }
+        Cart cart = cartFactory.getCart();
+
+
         if (checkCartConditions(cart, item)) {
             cart.addItem(item);
             return cart;
@@ -54,7 +56,7 @@ public class CartService {
         return true;
     }
 
-    private Cart createCartForItem(Item item) {
+    private void createCartForItem(Item item) {
         Cart cart;
         if (item instanceof DigitalItem) {
             cart = new DigitalItemCart();
@@ -62,19 +64,24 @@ public class CartService {
             cart = new DefaultItemCart();
         } else {
             System.out.println("Item type is not valid");
-            return null;
+            return ;
         }
         cartFactory.setCart(cart);
-        return cartFactory.getCart();
+        cartFactory.setCartCreated(true);
     }
-    public boolean resetCart() {
-        cartFactory.setCart(null);
-        return true;
+    public void resetCart() {
+        cartFactory.setCartCreated(false);
     }
+
     //TODO burada defaulItemCart ve defaultItem olarak özelleştirdim buna gerek var mı factory e eklenmeli mi
-    public Cart addVasItemToItem(AddVasItemRequestDTO addVasItemRequest) {
+    public Cart addVasItemToItem(AddVasItemRequest addVasItemRequest) {
         Cart cart = cartFactory.getCart();
-        Item vasItem = itemService.createVasItemFromRequest((DefaultItemCart) cart, addVasItemRequest);
+
+        if(!(cart instanceof DefaultItemCart)){
+            throw new BusinessException("VAS item can only be added to a cart with default items");
+        }
+
+        Item vasItem = itemService.createVasItemFromRequest(cart, addVasItemRequest);
         if(vasItem == null){
             return null;
         }
@@ -82,8 +89,17 @@ public class CartService {
         return cart;
     }
 
-    public Cart displayCart() {
-        return cartFactory.getCart();
+    public CartDisplayDTO displayCart() {
+        Cart cart;
+
+        if(!cartFactory.isCartCreated()){
+            cart = new Cart();
+        } else {
+            cart = cartFactory.getCart();
+            promotionService.applyPromotions(cartFactory.getCart());
+        }
+
+        return CartMapper.MAPPER.mapToCartDisplayDTO(cart);
     }
 
     public Cart removeItemFromCart(RemoveItemRequest removeItemRequest) {
@@ -105,21 +121,21 @@ public class CartService {
     public boolean isCartUniqueItemNumberExtendingLimits(Cart cart){
         return cart.getItems().size() > MAX_UNIQUE_ITEM_NUMBER;
     }
-    public boolean checkCartConditions(Cart cart, Item item) throws CartTotalExceededException {
+    public boolean checkCartConditions(Cart cart, Item item) throws BusinessException {
         if (isCartAmountExtendingLimits(cart, item)) {
-            throw new CartTotalExceededException("Adding this item would exceed the cart's total limit.");
+            throw new BusinessException("Adding this item would exceed the cart's total limit.");
         }
         if (isCartUniqueItemNumberExtendingLimits(cart)){
-            throw new CartTotalExceededException("Cart can only contain 10 unique items");
+            throw new BusinessException("Cart can only contain 10 unique items");
         }
         if (isCartItemNumberExtendingLimits(cart, item)) {
-            throw new CartTotalExceededException("Cart can only contain 30 items");
+            throw new BusinessException("Cart can only contain 30 items");
         }
         if (isItemQuantityExceedingLimits( item)) {
-            throw new CartTotalExceededException("Item quantity is exceeding limits");
+            throw new BusinessException("Item quantity is exceeding limits");
         }
         if (!isCartCompatible(cart, item)) {
-            throw new CartTotalExceededException("Item type is not compatible with cart type");
+            throw new BusinessException("Item type is not compatible with cart type");
         }
         return true;
     }

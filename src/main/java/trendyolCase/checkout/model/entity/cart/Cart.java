@@ -21,8 +21,8 @@ public class Cart {
 
     private UUID id;
     private double totalAmount;
-    private double discount;
-    private double promotion;
+    private double totalDiscount;
+    private int appliedPromotionId;
     private int itemCount;
     private List<Item> items;
 
@@ -77,8 +77,8 @@ public class Cart {
     public void resetCart() {
         this.id = UUID.randomUUID();
         this.totalAmount = 0;
-        this.discount = 0;
-        this.promotion = 0;
+        this.totalDiscount = 0;
+        this.appliedPromotionId = 0;
         this.itemCount = 0;
         this.items.clear();
     }

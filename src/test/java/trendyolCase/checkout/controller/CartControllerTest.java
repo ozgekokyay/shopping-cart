@@ -5,8 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.junit4.SpringRunner;
-import trendyolCase.checkout.model.dto.item.AddItemRequestDTO;
+import trendyolCase.checkout.model.request.AddItemRequestDTO;
 import trendyolCase.checkout.model.entity.cart.Cart;
 import trendyolCase.checkout.service.CartService;
 

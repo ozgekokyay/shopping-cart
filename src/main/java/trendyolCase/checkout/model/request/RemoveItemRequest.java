@@ -1,4 +1,4 @@
-package trendyolCase.checkout.model.dto.item;
+package trendyolCase.checkout.model.request;
 
 import lombok.Data;
 
