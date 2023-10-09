@@ -1,4 +1,7 @@
 package trendyolCase.checkout.model.entity.item;
+
+import trendyolCase.checkout.exception.BusinessException;
+
 /*
 VasItem
 Value Added Service item sigorta, montaj gibi hizmetleri ifade eder. Bu ürünler fiziksel bir
@@ -10,11 +13,15 @@ adet VASItem eklenebilir. VasItem'in CategoryID'si 3242'dir. VasItem'ların sat�
 türde bir Item türü yoktur.
  */
 public class VasItem extends Item {
-    private static final int MAX_ITEM_CAN_BE_PURCHASED = 3;
-    //todo validation
-
     private final int categoryId = 3242;
     private final int sellerId = 5003;
     private int maxQuantity = 3;
+    @Override
+    public void setQuantity(int quantity) {
+        if ((getQuantity() + quantity) > this.maxQuantity) {
+            throw new BusinessException("Item quantity is exceeding limits");
+        }
+        super.setQuantity(quantity);
+    }
 
 }

@@ -1,6 +1,7 @@
 package trendyolCase.checkout.service;
 
 import org.springframework.stereotype.Service;
+import trendyolCase.checkout.exception.BusinessException;
 import trendyolCase.checkout.model.request.AddItemRequest;
 import trendyolCase.checkout.model.request.AddVasItemRequest;
 import trendyolCase.checkout.model.entity.cart.DefaultItemCart;
@@ -29,29 +30,30 @@ public class ItemService {
         return item;
     }
 
-    public VasItem createVasItemFromRequest(Cart defaultItemCart, AddVasItemRequest addVasItemRequest) {
-        VasItem vasItem = new VasItem();
+    public void addVasItemToItem(Cart defaultItemCart, AddVasItemRequest addVasItemRequest) {
         DefaultItem defaultItem = (DefaultItem) defaultItemCart.getItemByIdFromCart(addVasItemRequest.getItemId());
-        if(defaultItem == null){
-            System.out.println("Item not found in cart");
-            return null;
+        if (defaultItem == null) {
+            throw new BusinessException("Item not found in cart");
+        } else if (defaultItem.getCategoryId() == 1001 || defaultItem.getCategoryId() == 5003) {
+            VasItem existingVasItem = defaultItem.getVasItems()
+                    .stream()
+                    .filter(vasItem -> vasItem.getId().equals(addVasItemRequest.getVasItemId()))
+                    .findAny()
+                    .orElse(new VasItem());
+
+            if (existingVasItem.getId() == null) {
+                VasItem newVasItem = new VasItem();
+                newVasItem.setId(addVasItemRequest.getVasItemId());
+                newVasItem.setCategoryId(addVasItemRequest.getCategoryId());
+                newVasItem.setSellerId(addVasItemRequest.getSellerId());
+                newVasItem.setPrice(addVasItemRequest.getPrice());
+                newVasItem.setQuantity(addVasItemRequest.getQuantity());
+                defaultItem.addVasItem((newVasItem));
+            } else {
+                existingVasItem.setQuantity(existingVasItem.getQuantity() + addVasItemRequest.getQuantity());
+            }
+
         }
-        else if(defaultItem.getCategoryId() == 1001 || defaultItem.getCategoryId() == 5003){
-            vasItem.setId(addVasItemRequest.getItemId());
-            vasItem.setCategoryId(addVasItemRequest.getCategoryId());
-            vasItem.setSellerId(addVasItemRequest.getSellerId());
-            vasItem.setPrice(addVasItemRequest.getPrice());
-            vasItem.setQuantity(addVasItemRequest.getQuantity());
-            defaultItem.addVasItem((vasItem));
-
-            return vasItem;
-        }
-        else{
-            System.out.println("VasItem cannot be added to this cart");
-            return null;
-
-        }        //TODO: 1. o item sepette mi sepette id ara, 2. o itemin category id si 1001 mi 5003 mü, 3 vasItemin category id si 3242 mi
-
     }
 
 

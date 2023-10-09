@@ -1,6 +1,7 @@
 package trendyolCase.checkout.model.entity.item;
 
 import lombok.Data;
+import trendyolCase.checkout.exception.BusinessException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,13 +42,17 @@ public class Item {
         return quantity > maxQuantity;
     }
 
-    public double getItemTotalAmount(){
-        return this.getPrice() * this.getQuantity();
+    public void setQuantity(int quantity) {
+        if (quantity > maxQuantity) {
+            throw new BusinessException("Item quantity is exceeding limits");
+        }
+        this.quantity = quantity;
     }
     public void updateQuantity(int itemQuantity) {
-        if(this.getQuantity() + itemQuantity > maxQuantity) throw
-            new IllegalArgumentException("Item quantity is exceeding limits");
-        else
-            this.setQuantity(this.getQuantity() + itemQuantity);
+        this.setQuantity(this.getQuantity() + itemQuantity);
+    }
+
+    public double getItemTotalAmount(){
+        return this.getPrice() * this.getQuantity();
     }
 }

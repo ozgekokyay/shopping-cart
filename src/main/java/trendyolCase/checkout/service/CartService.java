@@ -29,31 +29,26 @@ public class CartService {
     private static final int MAX_AMOUNT = 500000;
 
 
-    public Cart addItemToCart(AddItemRequest itemRequest) throws BusinessException {
+    public void addItemToCart(AddItemRequest itemRequest) throws BusinessException {
+        if (itemRequest.getQuantity() < 1) {
+            throw new BusinessException("Item quantity to be added cannot be less than 1");
+        }
         Item item = itemService.createItemFromRequest(itemRequest);
         if (!cartFactory.isCartCreated()) {
             createCartForItem(item);
         }
         Cart cart = cartFactory.getCart();
 
-
-        if (checkCartConditions(cart, item)) {
-            cart.addItem(item);
-            return cart;
-        } else {
-            return null;
-        }
+        checkCartConditions(cart, item);
+        cart.addItem(item);
     }
 
-    private boolean isCartCompatible(Cart cart, Item item) {
+    private void isCartCompatible(Cart cart, Item item) {
         if (cart instanceof DigitalItemCart && item instanceof DefaultItem) {
-            System.out.println("Default item cannot be added to a cart with digital items");
-            return false;
+            throw new BusinessException("Default item cannot be added to a cart with digital items");
         } else if (cart instanceof DefaultItemCart && item instanceof DigitalItem) {
-            System.out.println("Digital item cannot be added to a cart with default items");
-            return false;
+            throw new BusinessException("Digital item cannot be added to a cart with default items");
         }
-        return true;
     }
 
     private void createCartForItem(Item item) {
@@ -63,8 +58,7 @@ public class CartService {
         } else if (item instanceof DefaultItem) {
             cart = new DefaultItemCart();
         } else {
-            System.out.println("Item type is not valid");
-            return ;
+            throw new BusinessException("Item type is not supported");
         }
         cartFactory.setCart(cart);
         cartFactory.setCartCreated(true);
@@ -73,20 +67,17 @@ public class CartService {
         cartFactory.setCartCreated(false);
     }
 
-    //TODO burada defaulItemCart ve defaultItem olarak özelleştirdim buna gerek var mı factory e eklenmeli mi
-    public Cart addVasItemToItem(AddVasItemRequest addVasItemRequest) {
+    public void addVasItemToItem(AddVasItemRequest addVasItemRequest) {
+        if (addVasItemRequest.getQuantity() < 1) {
+            throw new BusinessException("VAS item quantity to be added cannot be less than 1");
+        }
         Cart cart = cartFactory.getCart();
 
         if(!(cart instanceof DefaultItemCart)){
             throw new BusinessException("VAS item can only be added to a cart with default items");
         }
+        itemService.addVasItemToItem(cart, addVasItemRequest);
 
-        Item vasItem = itemService.createVasItemFromRequest(cart, addVasItemRequest);
-        if(vasItem == null){
-            return null;
-        }
-        cart.addItem(vasItem);
-        return cart;
     }
 
     public CartDisplayDTO displayCart() {
@@ -108,35 +99,37 @@ public class CartService {
         return cart;
     }
 
-    public boolean isCartAmountExtendingLimits(Cart cart, Item item) {
-        return cart.getTotalAmount() + item.getItemTotalAmount() > MAX_AMOUNT;
-    }
-    public boolean isCartItemNumberExtendingLimits(Cart cart, Item item) {
-        return cart.getItemCount() + item.getQuantity() > MAX_ITEM_NUMBER;
-    }
-    ////TODO
-    public boolean isItemQuantityExceedingLimits(Item item) {
-        return item.getQuantity() > item.getMaxQuantity();
-    }
-    public boolean isCartUniqueItemNumberExtendingLimits(Cart cart){
-        return cart.getItems().size() > MAX_UNIQUE_ITEM_NUMBER;
-    }
-    public boolean checkCartConditions(Cart cart, Item item) throws BusinessException {
-        if (isCartAmountExtendingLimits(cart, item)) {
-            throw new BusinessException("Adding this item would exceed the cart's total limit.");
+    public void isCartAmountExceedingLimits(Cart cart, Item item) {
+        if(cart.getTotalAmount() + item.getItemTotalAmount() > MAX_AMOUNT) {
+            throw new BusinessException("Adding this item would exceed the cart's max amount " + MAX_AMOUNT);
         }
-        if (isCartUniqueItemNumberExtendingLimits(cart)){
+    }
+    public void isCartItemNumberExceedingLimits(Cart cart, Item item) {
+        if (cart.getItemCount() + item.getQuantity() > MAX_ITEM_NUMBER) {
+            throw new BusinessException("Adding this item would exceed the cart's max item number " + MAX_ITEM_NUMBER);
+        }
+    }
+
+    public void isItemQuantityExceedingLimits(Item item) {
+        if( item.getQuantity() > item.getMaxQuantity()){
+            throw new BusinessException("At most " + item.getMaxQuantity() + " items can be added to cart with same id");
+        }
+    }
+
+    public void isCartUniqueItemNumberExtendingLimits(Cart cart){
+        if (cart.getItems().size() > MAX_UNIQUE_ITEM_NUMBER){
             throw new BusinessException("Cart can only contain 10 unique items");
         }
-        if (isCartItemNumberExtendingLimits(cart, item)) {
-            throw new BusinessException("Cart can only contain 30 items");
-        }
-        if (isItemQuantityExceedingLimits( item)) {
-            throw new BusinessException("Item quantity is exceeding limits");
-        }
-        if (!isCartCompatible(cart, item)) {
-            throw new BusinessException("Item type is not compatible with cart type");
-        }
-        return true;
+    }
+    public void checkCartConditions(Cart cart, Item item) throws BusinessException {
+        isCartCompatible(cart, item);
+
+        isCartAmountExceedingLimits(cart, item);
+
+        isCartUniqueItemNumberExtendingLimits(cart);
+
+        isCartItemNumberExceedingLimits(cart, item);
+
+        isItemQuantityExceedingLimits(item);
     }
 }
