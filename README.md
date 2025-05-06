@@ -5,7 +5,21 @@ The Shopping Cart Application is a checkout REST application with functions like
 - Java JDK 17
 - Spring Boot 
 - Maven
+- 
+## 📌 Features
 
+- Add, remove, and reset cart items
+- Support for item types: `DefaultItem`, `DigitalItem`, `VasItem`
+- Enforces business rules such as:
+  - Max 10 unique items (excluding VAS)
+  - Max 30 total items
+  - Max total price: ₺500,000
+  - DigitalItem-only carts
+  - VASItem restrictions based on item category
+- Displays cart details with promotion support
+- JSON input/output via Postman
+
+  
 ## Available Endpoints
 
 The Shopping Cart Application provides the following endpoints for various operations:
