@@ -1,11 +1,12 @@
 # Shopping Cart Application
 The Shopping Cart Application is a checkout REST application with functions like add different types of items to a cart, adding digital items, value-added services, and applying promotions.
+
 ### Prerequisites
 
 - Java JDK 17
 - Spring Boot 
 - Maven
-- 
+  
 ## 📌 Features
 
 - Add, remove, and reset cart items
